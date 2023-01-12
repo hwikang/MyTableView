@@ -55,7 +55,6 @@ final class ThumbnailView: UIView {
     @objc func drag(with sender: UIPanGestureRecognizer) {
         let startPoint = self.bounds.origin.y
         let transition = sender.translation(in: self)
-        
         self.bounds.origin.y = startPoint - transition.y
         
         if startPoint < self.bounds.origin.y {
@@ -82,21 +81,16 @@ final class ThumbnailView: UIView {
         changeOffset =  changeOffset - changeY
         if changeOffset > cellHeight {
             var temp = dataSource
-
-            let multiple = Int(changeOffset/cellHeight)
-            for _ in 1...multiple {
-                
-                if let last = dataSource.last {
-                    if last > lastImageIndex-1 {
-                        scrollDownEnded = true
-                        return }
-                    temp.remove(at: 0)
-                    temp.append(last + 1)
-                    changeOffset -= cellHeight
-
-                }
+            if let last = dataSource.last {
+                if last > lastImageIndex-1 {
+                    scrollDownEnded = true
+                    return }
+                temp.remove(at: 0)
+                temp.append(last + 1)
+                changeOffset -= cellHeight
 
             }
+
             dataSource = temp
             self.bounds.origin.y -= cellHeight
             reloadData()
@@ -111,8 +105,7 @@ final class ThumbnailView: UIView {
             if let first = dataSource.first {
                 if first < 2 {
                     
-                    //scroll End
-                    
+                    print("scrollUpEnded")
                     scrollUpEnded = true
                     return }
                 temp.removeLast()
@@ -130,8 +123,9 @@ final class ThumbnailView: UIView {
     private func reloadData() {
         stackView.subviews.forEach { $0.removeFromSuperview() }
         for i in 0..<dataSource.count {
-            let imageView = createImageView(index: dataSource[i])!
-            stackView.addArrangedSubview(imageView)
+            if let imageView = createImageView(index: dataSource[i]) {
+                stackView.addArrangedSubview(imageView)
+            }
 
         }
     }
