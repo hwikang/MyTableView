@@ -9,17 +9,16 @@ import Foundation
 import UIKit
 
 
-
-
 final class ThumbnailView: UIView {
     lazy var deviceHeight = self.safeAreaLayoutGuide.layoutFrame.height
     lazy var cellHeight = deviceHeight / 4
     lazy var bgColor = getRandomColor()
-    lazy var borderColor = getRandomColor()
     
     var dataSource:[Int] = []
     var lastImageIndex = 50
     var scrollDownEnded = false
+    var scrollUpEnded = true
+
     var changeOffset: CGFloat = 0
     
     public let stackView: UIStackView = {
@@ -28,12 +27,10 @@ final class ThumbnailView: UIView {
         view.axis = .vertical
         return view
     }()
-    
-    
+
     init() {
         super.init(frame: .zero)
         setUI()
-        
         
         for i in 1...7 {
             dataSource.append(i)
@@ -41,11 +38,7 @@ final class ThumbnailView: UIView {
      
         let gesture = UIPanGestureRecognizer(target: self, action: #selector(drag(with:)))
         self.addGestureRecognizer(gesture)
-
     }
-    
-    
-    
     
     override func draw(_ rect: CGRect) {
         if let context = UIGraphicsGetCurrentContext() {
@@ -54,34 +47,30 @@ final class ThumbnailView: UIView {
             context.fill(rect);
         }
         for i in 1..<dataSource.count {
-            
             guard let imageView = createImageView(index: i) else { continue }
-            
             stackView.addArrangedSubview(imageView)
-            
-
         }
-        
-
-
     }
-    
-   
     
     @objc func drag(with sender: UIPanGestureRecognizer) {
         let startPoint = self.bounds.origin.y
         let transition = sender.translation(in: self)
+        
         self.bounds.origin.y = startPoint - transition.y
         
-        print("Bounds \(self.bounds.origin.y)")
-       
         if startPoint < self.bounds.origin.y {
-            //scrollDown
-            if scrollDownEnded { return }
-
+            if scrollDownEnded {
+                self.bounds.origin.y = cellHeight
+                return
+            }
+            scrollUpEnded = false
             scrollDown(changeY: transition.y)
 
         } else {
+            if scrollUpEnded {
+                self.bounds.origin.y = 0
+            }
+            scrollDownEnded = false
             scrollUp(changeY: transition.y)
 
         }
@@ -89,10 +78,9 @@ final class ThumbnailView: UIView {
     }
     
     private func scrollDown(changeY: CGFloat) {
+     
         changeOffset =  changeOffset - changeY
-        print("changeOffset \(changeOffset)")
         if changeOffset > cellHeight {
-            print("Trigger Down")
             var temp = dataSource
 
             let multiple = Int(changeOffset/cellHeight)
@@ -100,7 +88,7 @@ final class ThumbnailView: UIView {
                 
                 if let last = dataSource.last {
                     if last > lastImageIndex-1 {
-                        //scroll End
+                        scrollDownEnded = true
                         return }
                     temp.remove(at: 0)
                     temp.append(last + 1)
@@ -109,9 +97,7 @@ final class ThumbnailView: UIView {
                 }
 
             }
-           
             dataSource = temp
-            
             self.bounds.origin.y -= cellHeight
             reloadData()
         }
@@ -120,15 +106,14 @@ final class ThumbnailView: UIView {
    
     private func scrollUp(changeY: CGFloat) {
         changeOffset =  changeOffset - changeY
-        print("changeOffset \(changeOffset)")
         if changeOffset < 0 {
-            print("Trigger Up")
             var temp = dataSource
             if let first = dataSource.first {
                 if first < 2 {
                     
                     //scroll End
                     
+                    scrollUpEnded = true
                     return }
                 temp.removeLast()
                 temp.insert(first - 1, at: 0)
@@ -136,15 +121,11 @@ final class ThumbnailView: UIView {
 
             }
             dataSource = temp
-            
             self.bounds.origin.y += cellHeight
             reloadData()
             
         }
-        
-
     }
-    
     
     private func reloadData() {
         stackView.subviews.forEach { $0.removeFromSuperview() }
@@ -153,14 +134,11 @@ final class ThumbnailView: UIView {
             stackView.addArrangedSubview(imageView)
 
         }
-       
-        
     }
     
     private func createImageView(index:Int) -> UIImageView? {
         guard let image = UIImage(named: "image\(index)") else {return nil}
         let imageView = UIImageView(image: image)
-
 
         imageView.translatesAutoresizingMaskIntoConstraints = false
         imageView.heightAnchor.constraint(equalToConstant: cellHeight).isActive = true
