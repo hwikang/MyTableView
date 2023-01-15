@@ -14,12 +14,12 @@ final class ThumbnailView: UIView {
     lazy var cellHeight = deviceHeight / 4
     lazy var bgColor = getRandomColor()
     
-    var dataSource:[Int] = []
-    var lastImageIndex = 50
-    var scrollDownEnded = false
-    var scrollUpEnded = true
+    private var dataSource:[Int] = []
+    private var lastImageIndex = 50
+    private var scrollDownEnded = false
+    private var scrollUpEnded = true
 
-    var changeOffset: CGFloat = 0
+    private var changeOffset: CGFloat = 0
     
     public let stackView: UIStackView = {
         let view = UIStackView()
@@ -104,8 +104,6 @@ final class ThumbnailView: UIView {
             var temp = dataSource
             if let first = dataSource.first {
                 if first < 2 {
-                    
-                    print("scrollUpEnded")
                     scrollUpEnded = true
                     return }
                 temp.removeLast()
